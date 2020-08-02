@@ -7,7 +7,7 @@ use text_io::read;
 fn as_field_list_c_syntax(meta: &MetaData) -> String {
     let mut output = String::new();
     let name = meta.name.replace(" ", "_");
-    output += &format!("const struct Field {}[] = {{ //\n", name);
+    output += &format!("const struct Field {}[] = {{\n", name);
     for field in &meta.fields {
         output += &format!("\t{{ // {}\n", field.name);
         output += &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
@@ -24,7 +24,7 @@ fn as_field_list_c_syntax(meta: &MetaData) -> String {
 fn as_field_list_rust_syntax(meta: &MetaData) -> String {
     let mut output = String::new();
     let name = meta.name.replace(" ", "_");
-    output += &format!("{}: &[\n", name);
+    output += &format!("fields: &[ // {}\n", name);
     for field in &meta.fields {
         output += &format!("\tField::<f32> {{ // {}\n", field.name);
         output += &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}",
