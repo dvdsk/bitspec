@@ -1,6 +1,7 @@
+mod compression;
 mod field;
 mod spec;
-mod compression;
 
-pub use field::{Field, FieldId};
+pub use field::{MetaField, Field, FieldId};
+pub use spec::{MetaDataSpec, MetaData};
 pub use spec::{write_template};
