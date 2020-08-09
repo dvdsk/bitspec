@@ -27,7 +27,7 @@ fn as_field_list_rust_syntax(meta: &MetaData) -> String {
     output += &format!("fields: &[ // {}\n", name);
     for field in &meta.fields {
         output += &format!("\tField::<f32> {{ // {}\n", field.name);
-        output += &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}",
+        output += &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
             field.decode_add,
             field.decode_scale, 
             field.length,
