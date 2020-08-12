@@ -76,7 +76,7 @@ fn main() {
     println!("print needed C source? Y/n");
     let print_fields: String = read!("{}\n");
     if print_fields != "n" {
-        println!("******\n{}\n******", include_str!("compression.c"));
-        println!("******\n{}\n******", include_str!("field.c"));
+        println!("******\n{}\n******", include_str!("../c_src/encoding.h"));
+        println!("******\n{}\n******", include_str!("../c_src/encoding.c"));
     }    
 }

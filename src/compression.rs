@@ -4,12 +4,8 @@ pub fn decode(line: &[u8], bit_offset: u8, length: u8) -> u32 {
     let stop_byte = ((bit_offset + length) / 8) as usize;
 
     let start_mask: u8 = !0 >> (bit_offset % 8);
-    //println!("start_mask: {}", start_mask);
     let used_bits = bit_offset + length - stop_byte as u8 * 8;
-    //println!("div: {}, {}",bit_offset,(((bit_offset+7)/8))*8);
-    //println!("used_bits: {}",used_bits);
     let stop_mask = !(!0 >> used_bits);
-    //println!("stop mask {:b}",stop_mask);
 
     //decode first bit (never needs shifting (lowest part is used))
     let mut decoded: u32 = (line[start_byte] & start_mask) as u32;
@@ -22,9 +18,6 @@ pub fn decode(line: &[u8], bit_offset: u8, length: u8) -> u32 {
             bits_read += 8;
         }
     }
-    //println!("stop_byte: {}",stop_byte);
-    //println!("############################\nstop_byte: {}, \nstop_mask: {:b}\nbits_read: {}\nmasked line: {:b}\nraw line: {:b}\n//////////////////////",
-    //stop_byte, stop_mask,bits_read,line[stop_byte] & stop_mask, line[stop_byte]);
     let stop_byte = div_up(bit_offset + length, 8) as usize; //starts at 0
     decoded |= ((line[stop_byte - 1] & stop_mask) as u32) << (bits_read - (8 - used_bits));
 
@@ -42,7 +35,6 @@ pub fn encode(to_encode: u32, line: &mut [u8], bit_offset: u8, length: u8) {
 
     let start_byte = (bit_offset / 8) as usize;
     let stop_byte = ((bit_offset + length) / 8) as usize;
-    //println!("start_byte: {}, stop_byte: {}, bit_offset: {}, length: {}", start_byte, stop_byte, bit_offset, length);
 
     //encode first bit (never needs shifting (lowest part is used))
     line[start_byte] |= (to_encode as u8) & start_mask;
@@ -50,22 +42,14 @@ pub fn encode(to_encode: u32, line: &mut [u8], bit_offset: u8, length: u8) {
 
     if length > 8 {
         //decode middle bits, no masking needed
-        //println!("stop_byte: {}, start_byte+1: {}", stop_byte, start_byte+1);
         for byte in line[start_byte + 1..stop_byte].iter_mut() {
-            //println!("hihi");
             *byte |= (to_encode >> bits_written) as u8;
             bits_written += 8;
         }
     }
 
-    //println!("############################\nstart_byte: {}, stop_byte: {}, \nbits_written: {}\nraw line: {:b}\n//////////////////////",
-    //start_byte, stop_byte,bits_written,line[start_byte]);
-
     let used_bits = bit_offset + length - stop_byte as u8 * 8;
-    //let used_bits = bit_offset+length - bits_written;
-    //println!("used_bits: {}", used_bits);
     let stop_mask = !(!0 >> used_bits);
-    //println!("stop_mask: {}", stop_mask);
     let stop_byte = div_up(bit_offset + length, 8) as usize; //starts at 0
     line[stop_byte - 1] |= (to_encode >> (bits_written - (8 - used_bits))) as u8 & stop_mask;
 }
