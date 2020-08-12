@@ -13,13 +13,13 @@ pub fn decode(line: &[u8], bit_offset: u8, length: u8) -> u32 {
     //if we have more bits
     if length > 8 {
         //decode middle bits, no masking needed
-        for (i, byte) in line[start_byte + 1..stop_byte].iter().enumerate() {
-            decoded |= (*byte as u32) << (8 - (bit_offset % 8) + (i as u8) * 8);
+        for byte in &line[start_byte + 1..stop_byte] {
+            decoded |= (*byte as u32) << bits_read;
             bits_read += 8;
         }
     }
-    let stop_byte = div_up(bit_offset + length, 8) as usize; //starts at 0
-    decoded |= ((line[stop_byte - 1] & stop_mask) as u32) << (bits_read - (8 - used_bits));
+    let stop_byte = (div_up(bit_offset + length, 8)-1) as usize; //starts at 0
+    decoded |= ((line[stop_byte] & stop_mask) as u32) << (bits_read - (8 - used_bits));
 
     decoded
 }

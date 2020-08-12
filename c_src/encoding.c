@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h> //dev only
 #include "encoding.h"
 
 static uint8_t div_up(uint8_t x, uint8_t y) {
@@ -16,18 +17,19 @@ uint32_t decode_value(uint8_t line[], const uint8_t bit_offset, const uint8_t le
     //decode first bit (never needs shifting (lowest part is used))
     uint32_t decoded = (uint32_t)(line[start_byte] & start_mask);
     uint8_t bits_read = 8 - (bit_offset % 8);
+
     //if we have more bits
     if(length > 8) {
         //decode middle bits, no masking needed
-        for (int i=0; i<stop_byte+1-start_byte; i++){
-            uint8_t byte = line[start_byte+i];
-            decoded |= (uint32_t)byte << (8 - (bit_offset % 8) + (uint8_t)i * 8);
+        for (int i=start_byte+1; i<stop_byte; i++){
+            uint8_t byte = line[i];
+            decoded |= (uint32_t)byte << bits_read;
             bits_read += 8;
         }
     }
 
-    int stop_byte_upper = div_up(bit_offset + length, 8); //starts at 0
-    decoded |= ((line[stop_byte_upper - 1] & (uint32_t)stop_mask)) << (bits_read - (8 - used_bits));
+    int stop_byte_upper = div_up(bit_offset + length, 8) - 1; //starts at 0 
+    decoded |= ((line[stop_byte_upper] & (uint32_t)stop_mask)) << (bits_read - (8 - used_bits));
     return decoded;
 }
 
@@ -73,10 +75,8 @@ void encode(const struct Field* self, float numb, uint8_t line[])
 {
     numb -= (float)self->decode_add;
     numb /= (float)self->decode_scale;
-    //println!("scale: {}, add: {}, numb: {}", self.decode_scale, self.decode_add, numb);
 
     const uint32_t to_encode = (uint32_t)numb;
-
     encode_value(to_encode, line, self->offset, self->length);
 }
 
