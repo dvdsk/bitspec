@@ -137,9 +137,9 @@ where
 
         decoded
     }
-    pub fn encode<D>(&self, mut numb: T, line: &mut [u8])
+    pub fn encode(&self, mut numb: T, line: &mut [u8])
     where
-        D: num::cast::NumCast
+        T: num::cast::NumCast
             + std::fmt::Display
             + std::ops::Add
             + std::ops::SubAssign
@@ -155,4 +155,42 @@ where
 
         compression::encode(to_encode, line, self.offset, self.length);
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test(){
+        let fields = &[ // Ble_reliability_testing_dataset
+            Field::<f32> { // Sine
+                    decode_add: -5000.0000000000,
+                    decode_scale: 1.0000000000,
+                    length: 14,
+                    offset: 0},
+            Field::<f32> { // Triangle
+                    decode_add: -10.0000000000,
+                    decode_scale: 0.0500000007,
+                    length: 10,
+                    offset: 14},
+        ];
+
+        for i in 0..100 {
+            let sine = -5000.0 + i as f32*(5000.0*2.0)/100.0;
+            let triangle = 20.0 - i as f32*(20.0+10.0)/100.0;
+    
+            let mut line = [0u8, 0, 0];
+            fields[0].encode(sine, &mut line);
+            fields[1].encode(triangle, &mut line);
+    
+            let decoded_sine: f32 = fields[0].decode(&line);
+            let decoded_triangle: f32 = fields[1].decode(&line);
+            
+            assert!(sine-decoded_sine <= 1.+0.001);
+            assert!(triangle-decoded_triangle <= 0.05+0.001 );
+        }
+    }
+
 }
