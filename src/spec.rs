@@ -7,7 +7,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use crate::{MetaField, FieldId};
+use crate::{Field, FloatField, BoolField, MetaField, FieldId};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct FieldLength {
@@ -34,10 +34,16 @@ pub struct FieldManual {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct Bool {
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum FieldSpec {
     BitLength(FieldLength),
     Resolution(FieldResolution),
     Manual(FieldManual),
+    Bool(Bool)
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -47,52 +53,68 @@ pub struct MetaDataSpec {
     pub fields: Vec<FieldSpec>, //must be sorted lowest id to highest
 }
 
-impl Into<Vec<MetaField<f32>>> for MetaDataSpec {
-    fn into(mut self) -> Vec<MetaField<f32>> {
+impl Into<Vec<MetaField>> for MetaDataSpec {
+    fn into(mut self) -> Vec<MetaField> {
         let mut fields = Vec::new();
         let mut start_bit = 0;
         //convert every field enum in the fields vector into a field
-        for (id, field) in self.fields.drain(..).enumerate() {
+        for (id, spec) in self.fields.drain(..).enumerate() {
             if id == u8::max_value as usize {
                 error!("can only have {} fields", u8::max_value());
                 break;
             }
-            let (decode_scale, length, name, decode_add) = match field {
+            let name;
+            let length;
+            let field = match spec {
                 FieldSpec::BitLength(field) => {
+                    name = field.name;
+                    length = field.numb_of_bits;
                     let max_storable = 2_u32.pow(field.numb_of_bits as u32) as f32;
-                    let decode_scale = (field.max_value - field.min_value) / max_storable;
-
-                    let length = field.numb_of_bits;
-                    let name = field.name;
-                    let decode_add = field.min_value;
-                    (decode_scale, length, name, decode_add)
+                    Field::F32(FloatField::<f32> {
+                        offset: start_bit,
+                        length: field.numb_of_bits,
+                        decode_scale: (field.max_value - field.min_value) / max_storable,
+                        decode_add: field.min_value,
+                    })
                 }
                 FieldSpec::Resolution(field) => {
+                    name = field.name;
                     let given_range = field.max_value - field.min_value;
                     let needed_range = given_range as f32 / field.resolution as f32;
-                    let length = needed_range.log2().ceil() as u8;
-                    let decode_scale = field.resolution;
-
-                    let name = field.name;
-                    let decode_add = field.min_value;
-                    (decode_scale, length, name, decode_add)
+                    length = needed_range.log2().ceil() as u8;
+                    Field::F32(FloatField::<f32> {
+                        offset: start_bit,
+                        length,
+                        decode_scale: field.resolution,
+                        decode_add: field.min_value,
+                    })
                 }
                 FieldSpec::Manual(field) => {
-                    let length = field.length;
-                    let decode_scale = field.decode_scale;
-                    let name = field.name;
-                    let decode_add = field.decode_add;
-                    (decode_scale, length, name, decode_add)
+                    name = field.name;
+                    length = field.length;
+                    Field::F32(FloatField::<f32> {
+                        offset: start_bit,
+                        length,
+                        decode_scale: field.decode_scale,
+                        decode_add: field.decode_add,
+                    })
+                }
+                FieldSpec::Bool(field) => {
+                    name = field.name;
+                    length = 1;
+                    Field::Bool(BoolField {
+                        offset: start_bit,
+                    })
                 }
             };
-            fields.push(MetaField::<f32> {
+
+            let metafield = MetaField {
                 id: id as FieldId,
                 name,
-                offset: start_bit,
-                length,
-                decode_scale,
-                decode_add,
-            });
+                field,
+            };
+
+            fields.push(metafield);
             start_bit += length;
         }
         fields //must be sorted lowest id to highest
@@ -104,13 +126,13 @@ pub struct MetaData {
 	pub name: String,
 	pub description: String,
 	pub key: u64,
-	pub fields: Vec<MetaField<f32>>,//must be sorted lowest id to highest
+	pub fields: Vec<MetaField>,//must be sorted lowest id to highest
 }
 
 impl MetaData {
 	pub fn fieldsum(&self) -> u16 {
-		let field = self.fields.last().unwrap();
-		let bits = field.offset as u16 + field.length as u16;
+		let last_field = self.fields.last().unwrap();
+		let bits = last_field.offset() as u16 + last_field.length() as u16;
 		devide_up(bits, 8)
 	}
 }
@@ -151,10 +173,13 @@ pub fn write_template() -> io::Result<()> {
         decode_scale: 0.1,
         decode_add: -40f32,
     });
+    let template_field_4 = FieldSpec::Bool(Bool {
+        name: String::from("template field name4"),
+    });
     let metadata = MetaDataSpec {
 		name: String::from("template dataset name"),
 		description: String::from("This is a template it is not to be used for storing data, please copy this file and edit it. Then use the new file for creating new datasets"),
-		fields: vec!(template_field_1, template_field_2, template_field_3),
+		fields: vec!(template_field_1, template_field_2, template_field_3, template_field_4),
 	};
 
     if !Path::new("specs").exists() {
