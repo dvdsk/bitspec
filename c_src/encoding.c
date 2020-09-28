@@ -63,11 +63,10 @@ void encode_value(const uint32_t to_encode, uint8_t line[], const uint8_t bit_of
 float decode(const struct Field* self, uint8_t line[])
 {
     const uint32_t int_repr = decode_value(line, self->offset, self->length);
-    printf("int repr decoding: %u \n", int_repr);
     float decoded = (float)int_repr;
 
-    decoded *= self->decode_scale;
-    decoded += self->decode_add;
+    decoded *= (float)self->decode_scale;
+    decoded += (float)self->decode_add;
 
     return decoded;
 }
@@ -78,7 +77,6 @@ void encode(const struct Field* self, float numb, uint8_t line[])
     numb /= (float)self->decode_scale;
 
     const uint32_t to_encode = (uint32_t)numb;
-    printf("int repr encoding: %u \n", to_encode);
     encode_value(to_encode, line, self->offset, self->length);
 }
 

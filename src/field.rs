@@ -20,53 +20,10 @@ where
 
 pub type FieldId = u8;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct MetaField {
+pub struct MetaField<T> {
     pub id: FieldId,
     pub name: String,
-    pub field: Field,
-}
 
-impl MetaField {
-    pub fn length(&self) -> u8 {
-        match &self.field {
-            Field::Bool(_) => 1,
-            Field::F32(f) => f.length,
-            Field::F64(f) => f.length,
-        }
-    }
-    pub fn offset(&self) -> u8 {
-        match &self.field {
-            Field::Bool(f) => f.offset,
-            Field::F32(f) => f.offset,
-            Field::F64(f) => f.offset,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum Field {
-    Bool(BoolField),
-    F32(FloatField<f32>),
-    F64(FloatField<f32>),
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct BoolField {
-    pub offset: u8,
-}
-
-impl BoolField {
-    pub fn decode(&self, line: &[u8]) -> bool {
-        if line[self.offset as usize] == 0u8 {
-            false
-        } else {
-            true
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct FloatField<T> {
     pub offset: u8, //bits
     pub length: u8, //bits (max 32 bit variables)
 
@@ -74,8 +31,81 @@ pub struct FloatField<T> {
     pub decode_add: T,
 }
 
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct Field<T> {
+    pub offset: u8, //bits
+    pub length: u8, //bits (max 32 bit variables)
+
+    pub decode_scale: T,
+    pub decode_add: T,
+}
+
+impl<T> Into<Field<T>> for MetaField<T> {
+    fn into(self) -> Field<T> {
+        Field {
+            offset: self.offset,
+            length: self.length,
+            decode_scale: self.decode_scale,
+            decode_add: self.decode_add,
+        }
+    }
+}
+
+impl<T> MetaField<T>
+where
+    T: num::cast::NumCast
+        + std::fmt::Display
+        + std::ops::Add
+        + std::ops::SubAssign
+        + std::ops::DivAssign
+        + std::ops::MulAssign
+        + std::marker::Copy,
+{
+    pub fn decode<D>(&self, line: &[u8]) -> D
+    where
+        D: num::cast::NumCast
+            + std::fmt::Display
+            + std::ops::Add
+            + std::ops::SubAssign
+            + std::ops::MulAssign
+            + std::ops::AddAssign,
+    {
+        //where D: From<T>+From<u32>+From<u16>+std::ops::Add+std::ops::SubAssign+std::ops::DivAssign+std::ops::AddAssign{
+        let int_repr: u32 = compression::decode(line, self.offset, self.length);
+        //println!("int regr: {}", int_repr);
+        let mut decoded: D = num::cast(int_repr).unwrap();
+
+        //println!("add: {}", self.decode_add);
+        //println!("scale: {}", self.decode_scale);
+
+        decoded *= num::cast(self.decode_scale).unwrap(); //FIXME flip decode scale / and *
+        decoded += num::cast(self.decode_add).unwrap();
+
+        decoded
+    }
+    #[allow(dead_code)]
+    pub fn encode<D>(&self, mut numb: T, line: &mut [u8])
+    where
+        D: num::cast::NumCast
+            + std::fmt::Display
+            + std::ops::Add
+            + std::ops::SubAssign
+            + std::ops::AddAssign
+            + std::ops::DivAssign,
+    {
+        //println!("org: {}",numb);
+        numb -= num::cast(self.decode_add).unwrap();
+        numb /= num::cast(self.decode_scale).unwrap();
+        //println!("scale: {}, add: {}, numb: {}", self.decode_scale, self.decode_add, numb);
+
+        let to_encode: u32 = num::cast(numb).unwrap();
+
+        compression::encode(to_encode, line, self.offset, self.length);
+    }
+}
+
 #[allow(dead_code)]
-impl<T> FloatField<T>
+impl<T> Field<T>
 where
     T: num::cast::NumCast
         + std::fmt::Display
@@ -135,12 +165,12 @@ mod tests {
     #[test]
     fn test(){
         let fields = &[ // Ble_reliability_testing_dataset
-            FloatField::<f32> { // Sine
+            Field::<f32> { // Sine
                     decode_add: -5000.0000000000,
                     decode_scale: 1.0000000000,
                     length: 14,
                     offset: 0},
-            FloatField::<f32> { // Triangle
+            Field::<f32> { // Triangle
                     decode_add: -10.0000000000,
                     decode_scale: 0.0500000007,
                     length: 10,
@@ -161,17 +191,6 @@ mod tests {
             assert!(sine-decoded_sine <= 1.+0.001);
             assert!(triangle-decoded_triangle <= 0.05+0.001 );
         }
-
-        //<debug> app:  99 4C 00               |.L.     
-        //<info> app: sine: 21.81
-
-        let line = [0x9du8, 0x4c, 0x00];
-        let decoded_sine: f32 = fields[0].decode(&line);
-        dbg!(decoded_sine);
-
-        let mut line = [0u8,0,0];
-        fields[0].encode(21.81f32, &mut line);
-        println!("{:#02x} {:#02x} {:#02x}",line[0],line[1],line[2]);
     }
 
 }
