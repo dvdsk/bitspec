@@ -60,26 +60,45 @@ void encode_value(const uint32_t to_encode, uint8_t line[], const uint8_t bit_of
     line[stop_byte_upper - 1] |= (uint8_t)(to_encode >> (bits_written - (8 - used_bits))) & stop_mask;
 }
 
-float decode(const struct Field* self, uint8_t line[])
+float decode_f32(const struct Field* self, uint8_t line[])
 {
-    const uint32_t int_repr = decode_value(line, self->offset, self->length);
+    struct Float32Field field = self->data.F32;
+    const uint32_t int_repr = decode_value(line, field.offset, field.length);
     printf("int repr decoding: %u \n", int_repr);
     float decoded = (float)int_repr;
 
-    decoded *= self->decode_scale;
-    decoded += self->decode_add;
+    decoded *= field.decode_scale;
+    decoded += field.decode_add;
 
     return decoded;
 }
 
-void encode(const struct Field* self, float numb, uint8_t line[])
+void encode_f32(const struct Field* self, float numb, uint8_t line[])
 {
-    numb -= (float)self->decode_add;
-    numb /= (float)self->decode_scale;
+    struct Float32Field field = self->data.F32;
+    numb -= (float)field.decode_add;
+    numb /= (float)field.decode_scale;
 
     const uint32_t to_encode = (uint32_t)numb;
     printf("int repr encoding: %u \n", to_encode);
-    encode_value(to_encode, line, self->offset, self->length);
+    encode_value(to_encode, line, field.offset, field.length);
+}
+
+bool decode_bool(const struct Field* self, uint8_t line[]){
+    struct BoolField field = self->data.Bool;
+    if (line[field.offset] == 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+void encode_bool(const struct Field *self, bool event, uint8_t line[]) {
+    struct BoolField field = self->data.Bool;
+    if (event == false) {
+        line[field.offset] = 0;
+    } else {
+        line[field.offset] = 1;
+    }
 }
 
 /*const uint8_t byte_length(const struct Field field_list[]){
