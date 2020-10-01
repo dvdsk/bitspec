@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I. -g
 DEPS = encoding.h
 OBJ = encoding.o test.o 
 
@@ -8,3 +8,7 @@ OBJ = encoding.o test.o
 
 test: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
+
+.PHONY: clean
+clean: 
+	rm -rf *.o

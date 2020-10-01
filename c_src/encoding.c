@@ -60,9 +60,9 @@ void encode_value(const uint32_t to_encode, uint8_t line[], const uint8_t bit_of
     line[stop_byte_upper - 1] |= (uint8_t)(to_encode >> (bits_written - (8 - used_bits))) & stop_mask;
 }
 
-float decode_f32(const struct Field* self, uint8_t line[])
+float decode_f32(const union Field* self, uint8_t line[])
 {
-    struct Float32Field field = self->data.F32;
+    struct Float32Field field = self->F32;
     const uint32_t int_repr = decode_value(line, field.offset, field.length);
     printf("int repr decoding: %u \n", int_repr);
     float decoded = (float)int_repr;
@@ -73,9 +73,9 @@ float decode_f32(const struct Field* self, uint8_t line[])
     return decoded;
 }
 
-void encode_f32(const struct Field* self, float numb, uint8_t line[])
+void encode_f32(const union Field* self, float numb, uint8_t line[])
 {
-    struct Float32Field field = self->data.F32;
+    struct Float32Field field = self->F32;
     numb -= (float)field.decode_add;
     numb /= (float)field.decode_scale;
 
@@ -84,20 +84,25 @@ void encode_f32(const struct Field* self, float numb, uint8_t line[])
     encode_value(to_encode, line, field.offset, field.length);
 }
 
-bool decode_bool(const struct Field* self, uint8_t line[]){
-    struct BoolField field = self->data.Bool;
-    if (line[field.offset] == 0) {
+bool decode_bool(const union Field* self, uint8_t line[]){
+    struct BoolField field = self->Bool;
+    uint8_t idx = field.offset /8; 
+    uint8_t bitmask = 0b00000001 << (field.offset % 8);
+    uint8_t bit = line[idx] & bitmask;
+    if (bit == 0) {
         return false;
     } else {
         return true;
     }
 }
-void encode_bool(const struct Field *self, bool event, uint8_t line[]) {
-    struct BoolField field = self->data.Bool;
+void encode_bool(const union Field *self, bool event, uint8_t line[]) {
+    struct BoolField field = self->Bool;
+    uint8_t idx = field.offset /8; 
+    uint8_t bitmask = 0b00000001 << (field.offset % 8);
     if (event == false) {
-        line[field.offset] = 0;
+        line[idx] &= ~bitmask;
     } else {
-        line[field.offset] = 1;
+        line[idx] &= bitmask;
     }
 }
 

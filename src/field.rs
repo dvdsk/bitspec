@@ -47,7 +47,7 @@ impl MetaField {
 pub enum Field {
     Bool(BoolField),
     F32(FloatField<f32>),
-    F64(FloatField<f32>),
+    F64(FloatField<f64>),
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -57,10 +57,22 @@ pub struct BoolField {
 
 impl BoolField {
     pub fn decode(&self, line: &[u8]) -> bool {
-        if line[self.offset as usize] == 0u8 {
+        let idx = (self.offset/8) as usize;
+        let bitmask = 0b00000001 << (self.offset % 8);
+        let bit = line[idx] & bitmask;
+        if bit == 0 {
             false
         } else {
             true
+        }
+    }
+    pub fn encode(&self, event: bool, line: &mut [u8]) {
+        let idx = (self.offset/8) as usize;
+        let bitmask = 0b00000001 << (self.offset % 8);
+        if event == false {
+            line[idx] &= !bitmask;
+        } else {
+            line[idx] &= bitmask;
         }
     }
 }

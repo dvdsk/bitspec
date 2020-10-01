@@ -62,17 +62,22 @@ void encode_and_decode_600() {
 }
 
 void field_encode_decode() {
-    const struct Field fields[] = {
-        { // Sine
-            decode_add: -5000,
-            decode_scale: 1,
-            length: 14,
-            offset: 0},
-        { // Triangle
-            decode_add: -10,
-            decode_scale: 0.05,
-            length: 10,
-            offset: 14},
+    const union Field fields[] = {
+        {.F32 = { // Sine
+            .decode_add = -5000,
+            .decode_scale = 1,
+            .length = 14,
+            .offset = 0},
+        },
+        {.F32 = { // Triangle
+            .decode_add = -10,
+            .decode_scale = 0.05,
+            .length = 10,
+            .offset = 14},
+        },
+        {.Bool = { // Boolean
+            .offset = 24},
+        }
     };
 
     /*for (int i=0; i<100; i++){
@@ -90,19 +95,21 @@ void field_encode_decode() {
         assert(triangle-decoded_triangle <= 0.05+0.001 );
     }*/
 
-    uint8_t line[3] = {0, 0, 0};
-    encode(&fields[1], 2.81, line);
-    printf("%#04x %#04x %#04x \n",line[0],line[1],line[2]);
-    float decoded = decode(&fields[1], line);
+    uint8_t line[4] = {0, 0, 0, 0};
+    encode_bool(&fields[2], true, line);
+
+    encode_f32(&fields[1], 2.81, line);
+    printf("%#04x %#04x %#04x %#04x\n",line[0],line[1],line[2],line[3]);
+    float decoded = decode_f32(&fields[1], line);
     printf("%.2f \n", decoded);
 }
 
 int main(){
-    printf("encode_and_decode_multiple_edge_case\n");
-    encode_and_decode_multiple_edge_case();
+    /* printf("encode_and_decode_multiple_edge_case\n"); */
+    /* encode_and_decode_multiple_edge_case(); */
 
-    printf("encode_and_decode_600\n");
-    encode_and_decode_600();
+    /* printf("encode_and_decode_600\n"); */
+    /* encode_and_decode_600(); */
 
     printf("field_encode_decode\n");    
     field_encode_decode();
