@@ -20,13 +20,13 @@ where
 
 pub type FieldId = u8;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct MetaField {
+pub struct Meta {
     pub id: FieldId,
     pub name: String,
     pub field: Field,
 }
 
-impl MetaField {
+impl Meta {
     pub fn length(&self) -> u8 {
         match &self.field {
             Field::Bool(_) => 1,

@@ -4,35 +4,51 @@ use std::io;
 use std::path::PathBuf;
 use text_io::read;
 
-fn as_field_list_c_syntax(meta: &MetaData) -> String {
+fn as_field_list_c_syntax(line: &FixedLine) -> String {
     let mut output = String::new();
-    let name = meta.name.replace(" ", "_");
+    let name = line.name.replace(" ", "_");
     output += &format!("const struct Field {}[] = {{\n", name);
-    for field in &meta.fields {
-        output += &format!("\t{{ // {}\n", field.name);
-        output += &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
-            field.decode_add,
-            field.decode_scale, 
-            field.length,
-            field.offset);
-            output += &format!("\t}},\n");
+    for meta in &line.fields {
+        output += &format!("\t{{ // {}\n", meta.name);
+        match &meta.field {
+            Field::Bool(_b) => todo!(),
+            Field::F32(f) => { output += 
+                &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
+                    f.decode_add, f.decode_scale, f.length, f.offset);
+                output += &format!("\t}},\n");}
+            Field::F64(f) => { output +=
+                &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
+                    f.decode_add,
+                    f.decode_scale, 
+                    f.length,
+                    f.offset);
+                output += &format!("\t}},\n");}
+        }
     }
     output += &format!("}};");
     output
 }
 
-fn as_field_list_rust_syntax(meta: &MetaData) -> String {
+fn as_field_list_rust_syntax(line: &FixedLine) -> String {
     let mut output = String::new();
-    let name = meta.name.replace(" ", "_");
+    let name = line.name.replace(" ", "_");
     output += &format!("fields: &[ // {}\n", name);
-    for field in &meta.fields {
-        output += &format!("\tField::<f32> {{ // {}\n", field.name);
-        output += &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
-            field.decode_add,
-            field.decode_scale, 
-            field.length,
-            field.offset);
-        output += &format!("}},\n");
+    for meta in &line.fields {
+        output += &format!("\tField::<f32> {{ // {}\n", meta.name);
+        match &meta.field {
+            Field::Bool(_b) => todo!(),
+            Field::F32(f) => { output += 
+                &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
+                    f.decode_add, f.decode_scale, f.length, f.offset);
+                output += &format!("\t}},\n");}
+            Field::F64(f) => { output +=
+                &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
+                    f.decode_add,
+                    f.decode_scale, 
+                    f.length,
+                    f.offset);
+                output += &format!("\t}},\n");}
+        }
     }
     output += &format!("];");
     output
@@ -59,7 +75,7 @@ fn main() {
         .unwrap();
     
     let meta_spec = serde_yaml::from_reader::<File, MetaDataSpec>(f).unwrap();
-    let metadata: MetaData = meta_spec.into();
+    let metadata: FixedLine = meta_spec.into();
     
     println!("print fields list [rust syntax]? Y/n");
     let print_fields: String = read!("{}\n");

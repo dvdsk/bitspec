@@ -7,7 +7,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use crate::{Field, FloatField, BoolField, MetaField, FieldId};
+use crate::{Field, FloatField, BoolField, Meta, FieldId};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct FieldLength {
@@ -53,8 +53,8 @@ pub struct MetaDataSpec {
     pub fields: Vec<FieldSpec>, //must be sorted lowest id to highest
 }
 
-impl Into<Vec<MetaField>> for MetaDataSpec {
-    fn into(mut self) -> Vec<MetaField> {
+impl Into<Vec<Meta>> for MetaDataSpec {
+    fn into(mut self) -> Vec<Meta> {
         let mut fields = Vec::new();
         let mut start_bit = 0;
         //convert every field enum in the fields vector into a field
@@ -108,7 +108,7 @@ impl Into<Vec<MetaField>> for MetaDataSpec {
                 }
             };
 
-            let metafield = MetaField {
+            let metafield = Meta {
                 id: id as FieldId,
                 name,
                 field,
@@ -122,14 +122,14 @@ impl Into<Vec<MetaField>> for MetaDataSpec {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct MetaData {
+pub struct FixedLine {
 	pub name: String,
 	pub description: String,
 	pub key: u64,
-	pub fields: Vec<MetaField>,//must be sorted lowest id to highest
+	pub fields: Vec<Meta>,//must be sorted lowest id to highest
 }
 
-impl MetaData {
+impl FixedLine {
 	pub fn fieldsum(&self) -> u16 {
 		let last_field = self.fields.last().unwrap();
 		let bits = last_field.offset() as u16 + last_field.length() as u16;
@@ -141,11 +141,11 @@ impl MetaData {
 	(t + (n-1))/n
 }
 
-impl Into<MetaData> for MetaDataSpec {
-    fn into(self) -> MetaData {
+impl Into<FixedLine> for MetaDataSpec {
+    fn into(self) -> FixedLine {
         //set the security key to a random value
         let mut rng = rand::StdRng::from_entropy();
-        MetaData {
+        FixedLine {
 			name: self.name.clone(),
 			description: self.description.clone(),
 			key: rng.gen(),
