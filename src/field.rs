@@ -58,6 +58,7 @@ impl Field {
             Self::F64(f) => f.len(),
         }
     }
+}
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct BoolField {
