@@ -51,11 +51,11 @@ pub enum Field {
 }
 
 impl Field {
-    pub fn len(&self){
+    pub fn len(&self) -> u8 {
         match &self {
-            Self::Bool(b) => 1,
-            Self::F32(f) => f.len(),
-            Self::F64(f) => f.len(),
+            Self::Bool(_) => 1,
+            Self::F32(f) => f.length,
+            Self::F64(f) => f.length,
         }
     }
 }
