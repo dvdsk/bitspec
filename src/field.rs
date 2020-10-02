@@ -44,6 +44,13 @@ impl Meta {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum FieldValue {
+    Bool(bool),
+    F32(f32),
+    F64(f64),
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Field {
     Bool(BoolField),
     F32(FloatField<f32>),
