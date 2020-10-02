@@ -50,6 +50,15 @@ pub enum Field {
     F64(FloatField<f64>),
 }
 
+impl Field {
+    pub fn len(&self){
+        match &self {
+            Self::Bool(b) => 1,
+            Self::F32(f) => f.len(),
+            Self::F64(f) => f.len(),
+        }
+    }
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct BoolField {
     pub offset: u8,
