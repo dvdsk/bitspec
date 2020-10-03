@@ -73,6 +73,13 @@ impl Field {
             (_, value) => panic!("field: {:?}, value: {:?}", &self, value),
         }
     }
+    pub fn decode(&self, line: &[u8]) -> FieldValue {
+        match &self {
+            Self::Bool(f) => FieldValue::Bool(f.decode(line)),
+            Self::F32(f) => FieldValue::F32(f.decode(line)),
+            Self::F64(f) => FieldValue::F64(f.decode(line)),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
