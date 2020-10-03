@@ -65,6 +65,14 @@ impl Field {
             Self::F64(f) => f.length,
         }
     }
+    pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
+        match (&self, value) {
+            (Self::Bool(f), FieldValue::Bool(value)) => f.encode(value, line),
+            (Self::F32(f), FieldValue::F32(value)) => f.encode(value, line),
+            (Self::F64(f), FieldValue::F64(value)) => f.encode(value, line),
+            (_, value) => panic!("field: {:?}, value: {:?}", &self, value),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
