@@ -65,6 +65,13 @@ impl Field {
             Self::F64(f) => f.length,
         }
     }
+    pub fn offset(&self) -> u8 {
+        match &self {
+            Self::Bool(b) => b.offset,
+            Self::F32(f) => f.offset,
+            Self::F64(f) => f.offset,
+        }
+    }
     pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
         match (&self, value) {
             (Self::Bool(f), FieldValue::Bool(value)) => f.encode(value, line),
