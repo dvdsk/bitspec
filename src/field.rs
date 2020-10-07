@@ -43,6 +43,12 @@ impl Meta {
     }
 }
 
+impl Into<Field> for Meta {
+    fn into(self) -> Field {
+        self.field
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum FieldValue {
     Bool(bool),
@@ -85,6 +91,16 @@ impl Field {
             Self::Bool(f) => FieldValue::Bool(f.decode(line)),
             Self::F32(f) => FieldValue::F32(f.decode(line)),
             Self::F64(f) => FieldValue::F64(f.decode(line)),
+        }
+    }
+}
+
+impl Into<f32> for FieldValue {
+    fn into(self) -> f32 {
+        match self {
+            Self::Bool(b) => b as isize as f32,
+            Self::F32(f) => f,
+            Self::F64(f) => f as f32,
         }
     }
 }
