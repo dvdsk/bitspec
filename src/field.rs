@@ -111,6 +111,16 @@ impl Into<f32> for FieldValue {
     }
 }
 
+impl Into<f64> for FieldValue {
+    fn into(self) -> f64 {
+        match self {
+            Self::Bool(b) => b as isize as f64,
+            Self::F32(f) => f as f64,
+            Self::F64(f) => f,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct BoolField {
     pub offset: u8,
