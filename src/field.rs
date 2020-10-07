@@ -41,6 +41,12 @@ impl Meta {
             Field::F64(f) => f.offset,
         }
     }
+    pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
+        self.field.encode(value, line);
+    }
+    pub fn decode(&self, line: &[u8]) -> FieldValue {
+        self.field.decode(line)
+    }
 }
 
 impl Into<Field> for Meta {
