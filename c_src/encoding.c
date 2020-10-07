@@ -105,10 +105,3 @@ void encode_bool(const union Field *self, bool event, uint8_t line[]) {
         line[idx] &= bitmask;
     }
 }
-
-/*const uint8_t byte_length(const struct Field field_list[]){
-    uint8_t last = sizeof(field_list)/sizeof(struct Field) -1;
-    uint16_t bits = field_list[last].offset+field_list[last].length;
-    uint8_t bytes = (bits - 1) / 8 + 1;
-    return bytes;
-}*/

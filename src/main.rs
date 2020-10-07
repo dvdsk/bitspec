@@ -7,22 +7,30 @@ use text_io::read;
 fn as_field_list_c_syntax(line: &FixedLine) -> String {
     let mut output = String::new();
     let name = line.name.replace(" ", "_");
-    output += &format!("const struct Field {}[] = {{\n", name);
+    output += &format!("const union Field {}[] = {{\n", name);
     for meta in &line.fields {
-        output += &format!("\t{{ // {}\n", meta.name);
         match &meta.field {
-            Field::Bool(_b) => todo!(),
-            Field::F32(f) => { output += 
-                &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
-                    f.decode_add, f.decode_scale, f.length, f.offset);
-                output += &format!("\t}},\n");}
-            Field::F64(f) => { output +=
-                &format!("\t\tdecode_add: {},\n\t\tdecode_scale: {},\n\t\tlength: {},\n\t\toffset: {}}},\n",
-                    f.decode_add,
-                    f.decode_scale, 
-                    f.length,
-                    f.offset);
-                output += &format!("\t}},\n");}
+            Field::Bool(b) => {
+                output += &format!("\t{{.Bool = {{ // {}\n", meta.name);
+                output += &format!("\t\toffset: {}}},\n", b.offset);
+                output += &format!("\t}},\n");
+            }
+            Field::F32(f) => {
+                output += &format!("\t{{.F32 = {{ // {}\n", meta.name);
+                output += &format!("\t\tdecode_add: {},\n", f.decode_add);
+                output += &format!("\t\tdecode_scale: {},\n", f.decode_scale);
+                output += &format!("\t\tlength: {},\n", f.length);
+                output += &format!("\t\toffset: {}}},\n", f.offset);
+                output += &format!("\t}},\n");
+            }
+            Field::F64(f) => {
+                output += &format!("\t{{.F64 = {{ // {}\n", meta.name);
+                output += &format!("\t\tdecode_add: {},\n", f.decode_add);
+                output += &format!("\t\tdecode_scale: {},\n", f.decode_scale);
+                output += &format!("\t\tlength: {},\n", f.length);
+                output += &format!("\t\toffset: {}}},\n", f.offset);
+                output += &format!("\t}},\n");
+            }
         }
     }
     output += &format!("}};");
@@ -34,7 +42,7 @@ fn as_field_list_rust_syntax(line: &FixedLine) -> String {
     let name = line.name.replace(" ", "_");
     output += &format!("fields: &[ // {}\n", name);
     for meta in &line.fields {
-        output += &format!("\tField::<f32> {{ // {}\n", meta.name);
+        output += &format!("\tField::F32(FloatField {{ // {}\n", meta.name);
         match &meta.field {
             Field::Bool(_b) => todo!(),
             Field::F32(f) => { output += 
@@ -47,7 +55,7 @@ fn as_field_list_rust_syntax(line: &FixedLine) -> String {
                     f.decode_scale, 
                     f.length,
                     f.offset);
-                output += &format!("\t}},\n");}
+                output += &format!("\t}}),\n");}
         }
     }
     output += &format!("];");
