@@ -48,7 +48,7 @@ fn as_field_list_rust_syntax(line: &FixedLine) -> String {
             Field::F32(f) => { output += 
                 &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
                     f.decode_add, f.decode_scale, f.length, f.offset);
-                output += &format!("\t}},\n");}
+                output += &format!("\t}}),\n");}
             Field::F64(f) => { output +=
                 &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
                     f.decode_add,
