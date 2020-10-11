@@ -42,21 +42,26 @@ fn as_field_list_rust_syntax(line: &FixedLine) -> String {
     let name = line.name.replace(" ", "_");
     output += &format!("fields: &[ // {}\n", name);
     for meta in &line.fields {
-        output += &format!("\tField::F32(FloatField {{ // {}\n", meta.name);
         match &meta.field {
-            Field::Bool(_b) => todo!(),
-            Field::F32(f) => { output += 
-                &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
+            Field::Bool(b) => { 
+                output += &format!("\tField::Bool(BoolField {{ // {}\n", meta.name);
+                output += &format!("\t\toffset: {}", b.offset);
+            }
+            Field::F32(f) => { 
+                output += &format!("\tField::F32(FloatField {{ // {}\n", meta.name);
+                output += &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
                     f.decode_add, f.decode_scale, f.length, f.offset);
-                output += &format!("\t}}),\n");}
-            Field::F64(f) => { output +=
-                &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
+            }
+            Field::F64(f) => { 
+                output += &format!("\tField::F64(FloatField {{ // {}\n", meta.name);
+                output += &format!("\t\tdecode_add: {:.10},\n\t\tdecode_scale: {:.10},\n\t\tlength: {},\n\t\toffset: {}",
                     f.decode_add,
                     f.decode_scale, 
                     f.length,
                     f.offset);
-                output += &format!("\t}}),\n");}
+            }
         }
+        output += &format!("\t}}),\n");
     }
     output += &format!("];");
     output
