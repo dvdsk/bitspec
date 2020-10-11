@@ -28,25 +28,13 @@ pub struct Meta {
 
 impl Meta {
     pub fn length(&self) -> u8 {
-        match &self.field {
-            Field::Bool(_) => 1,
-            Field::F32(f) => f.length,
-            Field::F64(f) => f.length,
-        }
+        self.field.length()
     }
     pub fn offset(&self) -> u8 {
-        match &self.field {
-            Field::Bool(f) => f.offset,
-            Field::F32(f) => f.offset,
-            Field::F64(f) => f.offset,
-        }
+        self.field.offset()
     }
     pub fn set_offset(&mut self, offset: u8) {
-        match &mut self.field {
-            Field::Bool(ref mut f) => f.offset = offset,
-            Field::F32(ref mut f) => f.offset = offset,
-            Field::F64(ref mut f) => f.offset = offset,
-        }
+        self.field.set_offset(offset);
     }
     pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
         self.field.encode(value, line);
@@ -77,7 +65,7 @@ pub enum Field {
 }
 
 impl Field {
-    pub fn len(&self) -> u8 {
+    pub fn length(&self) -> u8 {
         match &self {
             Self::Bool(_) => 1,
             Self::F32(f) => f.length,
@@ -89,6 +77,13 @@ impl Field {
             Self::Bool(b) => b.offset,
             Self::F32(f) => f.offset,
             Self::F64(f) => f.offset,
+        }
+    }
+    pub fn set_offset(&mut self, offset: u8) {
+        match self {
+            Field::Bool(ref mut f) => f.offset = offset,
+            Field::F32(ref mut f) => f.offset = offset,
+            Field::F64(ref mut f) => f.offset = offset,
         }
     }
     pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
