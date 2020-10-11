@@ -41,6 +41,13 @@ impl Meta {
             Field::F64(f) => f.offset,
         }
     }
+    pub fn set_offset(&mut self, offset: u8) {
+        match &mut self.field {
+            Field::Bool(ref mut f) => f.offset = offset,
+            Field::F32(ref mut f) => f.offset = offset,
+            Field::F64(ref mut f) => f.offset = offset,
+        }
+    }
     pub fn encode(&self, value: FieldValue, line: &mut [u8]) {
         self.field.encode(value, line);
     }
