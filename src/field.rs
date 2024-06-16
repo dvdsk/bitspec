@@ -1,12 +1,12 @@
 use crate::compression;
 use serde_derive::{Deserialize, Serialize};
 
-trait FloatIterExt {
+pub trait FloatMinMax {
     fn float_min(&mut self) -> f64;
     fn float_max(&mut self) -> f64;
 }
 
-impl<T> FloatIterExt for T
+impl<T> FloatMinMax for T
 where
     T: Iterator<Item = f64>,
 {
@@ -70,13 +70,8 @@ where
             + std::ops::MulAssign
             + std::ops::AddAssign,
     {
-        //where D: From<T>+From<u32>+From<u16>+std::ops::Add+std::ops::SubAssign+std::ops::DivAssign+std::ops::AddAssign{
         let int_repr: u32 = compression::decode(line, self.offset, self.length);
-        //println!("int regr: {}", int_repr);
         let mut decoded: D = num::cast(int_repr).unwrap();
-
-        //println!("add: {}", self.decode_add);
-        //println!("scale: {}", self.decode_scale);
 
         decoded *= num::cast(self.decode_scale).unwrap(); //FIXME flip decode scale / and *
         decoded += num::cast(self.decode_add).unwrap();
@@ -93,10 +88,8 @@ where
             + std::ops::AddAssign
             + std::ops::DivAssign,
     {
-        //println!("org: {}",numb);
         numb -= num::cast(self.decode_add).unwrap();
         numb /= num::cast(self.decode_scale).unwrap();
-        //println!("scale: {}, add: {}, numb: {}", self.decode_scale, self.decode_add, numb);
 
         let to_encode: u32 = num::cast(numb).unwrap();
 
@@ -124,13 +117,8 @@ where
             + std::ops::MulAssign
             + std::ops::AddAssign,
     {
-        //where D: From<T>+From<u32>+From<u16>+std::ops::Add+std::ops::SubAssign+std::ops::DivAssign+std::ops::AddAssign{
         let int_repr: u32 = compression::decode(line, self.offset, self.length);
-        //println!("int regr: {}", int_repr);
         let mut decoded: D = num::cast(int_repr).unwrap();
-
-        //println!("add: {}", self.decode_add);
-        //println!("scale: {}", self.decode_scale);
 
         decoded *= num::cast(self.decode_scale).unwrap(); //FIXME flip decode scale / and *
         decoded += num::cast(self.decode_add).unwrap();
@@ -157,40 +145,43 @@ where
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test(){
-        let fields = &[ // Ble_reliability_testing_dataset
-            Field::<f32> { // Sine
-                    decode_add: -5000.0000000000,
-                    decode_scale: 1.0000000000,
-                    length: 14,
-                    offset: 0},
-            Field::<f32> { // Triangle
-                    decode_add: -10.0000000000,
-                    decode_scale: 0.0500000007,
-                    length: 10,
-                    offset: 14},
+    fn test() {
+        let fields = &[
+            // Ble_reliability_testing_dataset
+            Field::<f32> {
+                // Sine
+                decode_add: -5000.0000000000,
+                decode_scale: 1.0000000000,
+                length: 14,
+                offset: 0,
+            },
+            Field::<f32> {
+                // Triangle
+                decode_add: -10.0000000000,
+                decode_scale: 0.0500000007,
+                length: 10,
+                offset: 14,
+            },
         ];
 
         for i in 0..100 {
-            let sine = -5000.0 + i as f32*(5000.0*2.0)/100.0;
-            let triangle = 20.0 - i as f32*(20.0+10.0)/100.0;
-    
+            let sine = -5000.0 + i as f32 * (5000.0 * 2.0) / 100.0;
+            let triangle = 20.0 - i as f32 * (20.0 + 10.0) / 100.0;
+
             let mut line = [0u8, 0, 0];
             fields[0].encode(sine, &mut line);
             fields[1].encode(triangle, &mut line);
-    
+
             let decoded_sine: f32 = fields[0].decode(&line);
             let decoded_triangle: f32 = fields[1].decode(&line);
-            
-            assert!(sine-decoded_sine <= 1.+0.001);
-            assert!(triangle-decoded_triangle <= 0.05+0.001 );
+
+            assert!(sine - decoded_sine <= 1. + 0.001);
+            assert!(triangle - decoded_triangle <= 0.05 + 0.001);
         }
     }
-
 }

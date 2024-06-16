@@ -9,16 +9,10 @@ edition = "2018"
 [dependencies]
 serde_derive = "1.0.80"
 serde = "1.0.80"
-serde_yaml = "0.8.7"
 num = "0.3.0"
 log = "0.4.5"
 rand = "0.5.5"
-text_io = "0.1.8" # move to bin dependencies
 
 [lib]
 name = "bitspec"
 path = "src/lib.rs"
-
-[[bin]]
-name = "spec-generator"
-path = "src/main.rs"

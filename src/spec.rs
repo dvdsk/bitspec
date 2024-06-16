@@ -1,13 +1,8 @@
 use log::error;
+use rand::{FromEntropy, Rng};
 use serde_derive::{Deserialize, Serialize};
-use serde_yaml;
-use rand::{Rng, FromEntropy};
 
-use std::fs;
-use std::io;
-use std::path::Path;
-
-use crate::{MetaField, FieldId};
+use crate::{FieldId, MetaField};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct FieldLength {
@@ -101,22 +96,23 @@ impl Into<Vec<MetaField<f32>>> for MetaDataSpec {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct MetaData {
-	pub name: String,
-	pub description: String,
-	pub key: u64,
-	pub fields: Vec<MetaField<f32>>,//must be sorted lowest id to highest
+    pub name: String,
+    pub description: String,
+    pub key: u64,
+    pub fields: Vec<MetaField<f32>>, //must be sorted lowest id to highest
 }
 
 impl MetaData {
-	pub fn fieldsum(&self) -> u16 {
-		let field = self.fields.last().unwrap();
-		let bits = field.offset as u16 + field.length as u16;
-		devide_up(bits, 8)
-	}
+    pub fn fieldsum(&self) -> u16 {
+        let field = self.fields.last().unwrap();
+        let bits = field.offset as u16 + field.length as u16;
+        divide_up(bits, 8)
+    }
 }
 
-#[inline] fn devide_up(t: u16, n: u16) -> u16 {
-	(t + (n-1))/n
+#[inline]
+fn divide_up(t: u16, n: u16) -> u16 {
+    (t + (n - 1)) / n
 }
 
 impl Into<MetaData> for MetaDataSpec {
@@ -124,80 +120,10 @@ impl Into<MetaData> for MetaDataSpec {
         //set the security key to a random value
         let mut rng = rand::StdRng::from_entropy();
         MetaData {
-			name: self.name.clone(),
-			description: self.description.clone(),
-			key: rng.gen(),
-			fields:  self.into(),//must be sorted lowest id to highest
-		}
-    }
-}
-
-pub fn write_template() -> io::Result<()> {
-    let template_field_1 = FieldSpec::BitLength(FieldLength {
-        name: String::from("template field name1"),
-        min_value: 0.01f32,
-        max_value: 10f32,
-        numb_of_bits: 10u8, //bits (max 32 bit variables)
-    });
-    let template_field_2 = FieldSpec::Resolution(FieldResolution {
-        name: String::from("template field name2"),
-        min_value: 0f32,
-        max_value: 100f32,
-        resolution: 0.1f32,
-    });
-    let template_field_3 = FieldSpec::Manual(FieldManual {
-        name: String::from("template field name3"),
-        length: 10,
-        decode_scale: 0.1,
-        decode_add: -40f32,
-    });
-    let metadata = MetaDataSpec {
-		name: String::from("template dataset name"),
-		description: String::from("This is a template it is not to be used for storing data, please copy this file and edit it. Then use the new file for creating new datasets"),
-		fields: vec!(template_field_1, template_field_2, template_field_3),
-	};
-
-    if !Path::new("specs").exists() {
-        fs::create_dir("specs")?
-    }
-    match fs::File::create("specs/template.yaml") {
-        Ok(f) => {
-            if serde_yaml::to_writer(f, &metadata).is_err() {
-                Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "could not parse specification",
-                ))
-            } else {
-                Ok(())
-            }
+            name: self.name.clone(),
+            description: self.description.clone(),
+            key: rng.gen(),
+            fields: self.into(), //must be sorted lowest id to highest
         }
-        Err(error) => Err(error),
     }
 }
-
-/*pub fn write_template_for_test() -> io::Result<()> {
-    let template_field_1 = FieldSpec::Manual( FieldManual {
-        name: String::from("timestamps"),
-        length: 32,
-        decode_scale: 1.,
-        decode_add: 0.,
-    });
-    let metadata = MetaDataSpec {
-        name: String::from("template dataset name"),
-        description: String::from("This is a test spec it is used for verifiying the timeseries interface"),
-        fields: vec!(template_field_1),
-    };
-
-    if !Path::new("specs").exists() {fs::create_dir("specs")? }
-    match fs::File::create("specs/template_for_test.yaml"){
-        Ok(f) => {
-            if serde_yaml::to_writer(f, &metadata).is_err() {
-                Err(io::Error::new(io::ErrorKind::InvalidData, "could not parse specification"))
-            } else { Ok(()) }
-        },
-        Err(error) => {
-            println!("error while adding test template");
-            Err(error)
-        },
-    }
-}*/
