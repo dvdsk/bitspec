@@ -1,29 +1,9 @@
 use crate::compression;
 use serde_derive::{Deserialize, Serialize};
 
-pub trait FloatMinMax {
-    fn float_min(&mut self) -> f64;
-    fn float_max(&mut self) -> f64;
-}
-
-impl<T> FloatMinMax for T
-where
-    T: Iterator<Item = f64>,
-{
-    fn float_max(&mut self) -> f64 {
-        self.fold(f64::NAN, f64::max)
-    }
-    fn float_min(&mut self) -> f64 {
-        self.fold(f64::NAN, f64::min)
-    }
-}
-
 pub type FieldId = u8;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct MetaField<T> {
-    pub id: FieldId,
-    pub name: String,
-
     pub offset: u8, //bits
     pub length: u8, //bits (max 32 bit variables)
 

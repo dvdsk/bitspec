@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 serde_derive = "1.0.80"
 serde = "1.0.80"
-num = "0.3.0"
+num = "0.4.0"
 log = "0.4.5"
-rand = "0.5.5"
+rand = "0.8.0"
 
 [lib]
 name = "bitspec"
